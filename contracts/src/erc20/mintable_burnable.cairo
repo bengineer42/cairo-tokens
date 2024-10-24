@@ -61,19 +61,20 @@ mod erc20_mintable_burnable {
 
     #[abi(embed_v0)]
     impl ERC20MintableBurnableImpl of IERC20MintableBurnable<ContractState> {
-        fn mint(ref self: ContractState, recipient: ContractAddress, amount: u256) {
-            assert(self.writers.entry(get_caller_address()).read(), 'ERC20: unauthorized caller');
-            self.erc20.mint(recipient, amount);
-        }
-
-        fn burn_from(ref self: ContractState, account: ContractAddress, amount: u256) {
-            self.erc20._spend_allowance(get_caller_address(), account, amount);
-            self.erc20.burn(account, amount);
-        }
-
         fn set_writer(ref self: ContractState, writer: ContractAddress, authorized: bool) {
             assert(self.owner.read() == get_caller_address(), 'ERC20: unauthorized caller');
             self.writers.entry(writer).write(authorized);
+        }
+        fn mint_to(ref self: ContractState, recipient: ContractAddress, amount: u256) {
+            assert(self.writers.entry(get_caller_address()).read(), 'ERC20: unauthorized caller');
+            self.erc20.mint(recipient, amount);
+        }
+        fn burn(ref self: ContractState, amount: u256) {
+            self.erc20.burn(get_caller_address(), amount);
+        }
+        fn burn_from(ref self: ContractState, account: ContractAddress, amount: u256) {
+            self.erc20._spend_allowance(get_caller_address(), account, amount);
+            self.erc20.burn(account, amount);
         }
     }
 }
