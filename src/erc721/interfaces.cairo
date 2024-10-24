@@ -1,5 +1,5 @@
 use starknet::ContractAddress;
-
+use openzeppelin_token::erc20::interfaces::IERC20MintableBurnable;
 #[starknet::interface]
 pub trait IERC721MintableBurnable<TContractState> {
     fn set_writer(ref self: TContractState, writer: ContractAddress, authorized: bool);

@@ -1,6 +1,6 @@
 #[starknet::contract]
 mod erc20_mintable_burnable {
-    use openzeppelin_token::erc20::{ERC20Component, ERC20HooksEmptyImpl};
+    use openzeppelin_token::erc20::{ERC20Component, ERC20HooksEmptyImpl, interface::IERC20Metadata};
     use starknet::{
         ContractAddress, get_caller_address,
         storage::{StoragePointerReadAccess, StoragePointerWriteAccess, StoragePathEntry, Map}
@@ -11,7 +11,8 @@ mod erc20_mintable_burnable {
 
     // ERC20 Mixin
     #[abi(embed_v0)]
-    impl ERC20MixinImpl = ERC20Component::ERC20MixinImpl<ContractState>;
+    impl ERC20Impl = ERC20Component::ERC20Impl<ContractState>;
+    impl ERC20CamelOnlyImpl = ERC20Component::ERC20CamelOnlyImpl<ContractState>;
     impl ERC20InternalImpl = ERC20Component::InternalImpl<ContractState>;
 
     #[storage]
@@ -20,6 +21,7 @@ mod erc20_mintable_burnable {
         erc20: ERC20Component::Storage,
         owner: ContractAddress,
         writers: Map<ContractAddress, bool>,
+        decimals: u8,
     }
 
     #[event]
@@ -31,10 +33,30 @@ mod erc20_mintable_burnable {
 
     #[constructor]
     fn constructor(
-        ref self: ContractState, name: ByteArray, symbol: ByteArray, owner: ContractAddress
+        ref self: ContractState,
+        name: ByteArray,
+        symbol: ByteArray,
+        decimals: u8,
+        owner: ContractAddress
     ) {
         self.erc20.initializer(name, symbol);
+        self.decimals.write(decimals);
         self.owner.write(owner);
+    }
+
+    #[abi(embed_v0)]
+    impl ERC20MetadataImpl of IERC20Metadata<ContractState> {
+        fn name(self: @ContractState) -> ByteArray {
+            self.erc20.name()
+        }
+
+        fn symbol(self: @ContractState) -> ByteArray {
+            self.erc20.symbol()
+        }
+
+        fn decimals(self: @ContractState) -> u8 {
+            self.decimals.read()
+        }
     }
 
     #[abi(embed_v0)]
